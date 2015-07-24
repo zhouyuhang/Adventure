@@ -35,6 +35,7 @@ else
             $speed = $rows[0]['speed'];
             $armor = $rows[0]['armor'];
             $result = $db -> query("INSERT INTO players (name,password,class,hpoints,mpoints,attack,speed,armor,level,experience) VALUES (" . $userName . ", '" . $password . "', " . $playerClass . ", '$hpoints','$mpoints','$attack','$speed','$armor', '1', '0')");
+            $item   = $db -> query("INSERT INTO items (itemName,userName,quantity,itemId,attack,speed,armor,hpoints,mpoints) VALUES ('small bread', " . $userName . ", '1', '101', '', '', '', '100', ''), ('small clarity', " . $userName . ", '1', '102', '', '', '', '', '100')");
             $db -> close();
             echo json_encode("1"); //success
         }

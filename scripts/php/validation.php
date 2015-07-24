@@ -16,7 +16,7 @@ if($rows)
    $db -> query("UPDATE players SET lastseen=now() where id= " . $id . "");
 
 	$fp = fopen("../../chat.html", 'a');  
-	//fwrite($fp, "<div class='msgln'>".$_SESSION['playerName']." has Join the Game."."<br></div>");  
+	fwrite($fp, "<div class='msgln'>".$_SESSION['playerName']." has Join the Game."."<br></div>");  
 	fclose($fp);
 
    echo json_encode($rows);

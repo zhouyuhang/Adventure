@@ -47,18 +47,12 @@
         <div class="col-md-12 column">
             <nav class="navbar navbar-inverse" role="navigation">
                 <div class="navbar-header">
-                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="#">Adventure</a>
+                     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button> <a class="navbar-brand" href="http://alexzhou.bugs3.com/Adventure/">Adventure</a>
                 </div>
                 
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li class="active">
-                            <a href="mailto:zhouyuhangcn@hotmail.com?Subject=Hello%20again">Email Me</a>
-                        </li>
-                        <li>
-                            <a href="#" >Facebook</a>
-                        </li>
-                        <li class="dropdown">
+                        <li class="dropdown active">
                              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Game Info<strong class="caret"></strong></a>
                             <ul class="dropdown-menu">
                                 <li>
@@ -82,14 +76,20 @@
                                 </li>
                             </ul>
                         </li>
-                    </ul>
-                    <form class="navbar-form navbar-left" role="search">
-                        <div class="form-group">
-                            <input type="text" class="form-control" />
-                        </div> <button type="submit" class="btn btn-default">Search</button>
-                    </form>
-                    <ul class="nav navbar-nav navbar-right">
                         <li>
+                            <a href="mailto:zhouyuhangcn@hotmail.com?Subject=Hello%20again">Email Me</a>
+                        </li>
+                        <li>
+                            <a href="https://www.linkedin.com/pub/yuhang-zhou/57/a54/859" target="_blank">About</a>
+                        </li>                        
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>                                                   
+                            <button type="button" class="btn btn-info" data-container="body" data-toggle="popover" data-placement="bottom" 
+                            data-content="Use Arrow keys to move your character. You can switch from Scenes by moving to top or bottom of the current Scene. 
+                            Chat with other players on World Chat. Fight monsters in the Scene to level up your character.">
+                              How to Play</button>&nbsp;
+                            
                             <input name='Submit' type="button" class="btn btn-default navbar-btn" onclick='javascript:logout()' value='Logout' />&nbsp;
                         </li>
                         
@@ -136,6 +136,7 @@
 </html>
 
 <script type="application/javascript">
+$("[data-toggle=popover]").popover();
 checkSession();
 
 //cannot bypass login

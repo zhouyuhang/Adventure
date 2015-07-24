@@ -10,7 +10,7 @@ $level = 0.3*sqrt($exp);
 $randexp = rand(0,10);
 $randgold = rand(0,10);
 
-$result = $db -> query("UPDATE players SET experience = experience+10+$randexp, gold = gold+10+$randgold, level = $level where id= " . $id . ";");
+$result = $db -> query("UPDATE players SET experience = experience+20+$randexp, gold = gold+20+$randgold where id= " . $id . ";");
 if($db->error() != '')
 {
     $error = $db->error();
@@ -20,6 +20,6 @@ if($db->error() != '')
 else
 {
      $db -> close();
-    echo json_encode($rows);
+    echo json_encode(1);
 }
 ?>

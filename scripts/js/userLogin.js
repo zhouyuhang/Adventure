@@ -22,7 +22,7 @@ function buildPage()
 {
   userStat();
   setInterval (userStat,3000);  //update user Status every 3 sec
-  setInterval (updateLastSeen,60000);   //update logged in users' lastSeen time every 10 minutes
+  setInterval (updateLastSeen,60*1000);   //update logged in users' lastSeen time every 1 minutes
 }
 
 
@@ -180,7 +180,9 @@ function userStat(){
           "<br>Speed: "+ data[0].speed +" "+
           "<br>Armor: "+ data[0].armor +" "+
 
-          "<br><br>Gold: "+ data[0].gold +" ";
+          "<br><br>Gold: "+ data[0].gold +" "+
+          "<br><br>X position: "+ data[0].xpos +" "+
+          "<br>Y position: "+ data[0].ypos +" ";
       }
   })
 }

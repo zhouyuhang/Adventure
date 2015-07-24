@@ -231,7 +231,7 @@ window.onload = function() {
                     console.log(data);
                 }
             });
-        }
+        };
 
         //the combat Scene of monster 1
         game.combatScene1 = function(){            

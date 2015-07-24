@@ -11,22 +11,23 @@ enchant();
 window.onload = function() {    
     var game = new Game(480, 320);
     game.fps = 24;
-    game.preload('images/exmap0.png');//preload map
-    game.preload('images/icon0.png');//preload icons
+    game.preload('images/exmap0.png');//map
+    game.preload('images/icon0.png', 'images/item1.gif');//icons
     game.preload('images/space3.png',
                 'images/heroWalk/h1.png','images/heroWalk/h2.png','images/heroWalk/h3.png',
                 'images/heroWalk/h4.png','images/heroWalk/h5.png','images/heroWalk/h6.png',
                 'images/heroWalk/h7.png','images/heroWalk/h8.png','images/heroWalk/h9.png',
-                'images/heroWalk/h10.png');//preload characters
+                'images/heroWalk/h10.png');//characters
     game.preload('images/NPCtile/village_inn.png','images/NPCtile/village_weapon.png',
-                'images/NPCtile/village_item.png','images/NPCtile/odin.png');//preload NPC tiles
+                'images/NPCtile/village_item.png','images/NPCtile/odin.png','images/NPCtile/pirategirl.png',
+                'images/NPCtile/pirate1.png');//NPC tiles
     game.preload('sounds/effect/bubble.wav','sounds/effect/beforefight.wav','sounds/effect/combat.wav',
-                'sounds/effect/mapchange.wav');//preload musics and sounds effect
+                'sounds/effect/mapchange.wav');//musics and sounds effect
     game.preload('avatarBg1.png','avatarBg2.png','avatarBg3.png','images/monster/bigmonster1.gif');//preload battle backgrounds
     game.preload('images/monster/monster1.gif','images/monster/monster2.gif','images/monster/monster3.gif',
                 'images/monster/monster4.gif','images/monster/monster5.gif','images/monster/monster6.gif',
                 'images/monster/monster7.gif','images/monster/bigmonster1.gif','images/monster/bigmonster2.gif');//preload monsters
-    game.preload('images/attackbtn.png');
+    game.preload('images/attackbtn.png');//attack button
 
     
     var Attacker = enchant.Class.create(Avatar, {
@@ -76,8 +77,7 @@ window.onload = function() {
         break;
         case 'win' :
           this.tl.delay(game.fps / 2).moveBy(0, -32, 3).moveBy(0, 32, 3);
-          this.tl.then(function(){ this.action = 'run'; }).moveTo(-this.width, this.positionY, game.fps);
-          victory();
+          this.tl.then(function(){ this.action = 'run'; }).moveTo(-this.width, this.positionY, game.fps);          
           game.popScene(); //quit the combat
         break;
     default : break;
@@ -86,17 +86,6 @@ window.onload = function() {
     }
   });
 
-  victory=function(){
-    $.ajax({
-        url : 'scripts/php/combatVic.php',
-        type : 'POST',
-        dataType:'json',
-        success : function(data) {
-        console.log(data);
-        //increase exp by 10                            
-        }
-    });
-  };
 
   var Damage = enchant.Class.create(MutableText, {
       initialize : function(x, y, height, val){
@@ -143,7 +132,7 @@ window.onload = function() {
       this.walk = 1;
       
       this.addEventListener('enterframe', function() {
-      var game = enchant.Game.instance;
+      var game = enchant.Game.instance;      
       this.frame = this.direction * 3 + this.walk;
             if (this.isMoving) {
                 this.moveBy(this.vx, this.vy);
@@ -183,8 +172,10 @@ window.onload = function() {
             }
       });
     }
-  });
-    
+  }); 
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////    
 
     game.onload = function() { 
         var map = new Map(16, 16);
@@ -214,8 +205,10 @@ window.onload = function() {
         }
 
         var player = new Player(map);
-        playerStat();
-        
+        playerStat();//set player's image according to classes
+
+        /*
+        //to be added : name Label on players
         game.nameLabel = function(data){
             player.login_name = new Label(data[0].name);
             player.login_name.textAlign = 'center';
@@ -225,22 +218,22 @@ window.onload = function() {
             player.login_name.y = this.y + 32;
             stage.addChild(player.login_name);
         }
-        
-        //sending current position to database
-        game.updatePos = function(){
-            xpos = player.x;
-            ypos = player.y;
-            //console.log(xpos+":"+ypos);
-            $.ajax({
-                url : 'scripts/php/updatePos.php',
-                type : 'POST',
-                data : {xposition:xpos,yposition:ypos},
-                dataType:'json',
-                success : function(data) {
-                    console.log(data);
-                }
-            });
-        }
+        */
+
+        //victory query for combatScene1
+        victory=function(){
+          $.ajax({
+              url : 'scripts/php/combatVic.php',
+              type : 'POST',
+              dataType:'json',
+              success : function(data) {
+              //console.log(data);                                         
+              }
+          });
+        };
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
 
         //the combat Scene of monster 1
         game.combatScene1 = function(){            
@@ -314,6 +307,7 @@ window.onload = function() {
             enemy.inputCount = game.fps*2;//wait time before first attack
             enemy.addEventListener(enchant.Event.ENTER_FRAME, function(){
               if(this.hp < 1) this.action = 'disappear';
+                
               if(this.action === 'stop' && attacker.action === 'stop') this.inputCount--;
               if(this.inputCount < 1){
                 this.tl.moveTo(attacker.x - attacker.width, attacker.y + attacker.height - attacker.height, 6);                
@@ -332,6 +326,7 @@ window.onload = function() {
 
             enemy.addEventListener(enchant.Event.REMOVED_FROM_SCENE, function(){
               attacker.command = 'win';
+              victory(); //add exp and gold to database               
               command.visible = false;
             });
             scene.addChild(enemy);
@@ -374,15 +369,29 @@ window.onload = function() {
             var returnLabel = new Label('Escape');
             returnLabel.y = 5;
             returnLabel.x = 400;
+            returnLabel.font = "14px Lucida Sans Unicode, Lucida Grande, sans-serif";
             returnLabel.color = "white";
             scene.addChild(returnLabel);
             returnLabel.addEventListener('touchend',function(){
-                game.popScene();
+                game.popScene();                
             })
-            //scene.scaleX = 1.1;
-            //scene.scaleY = 1.1;
             return scene;
         }
+
+        //victory query for cambatScene2
+        victory2=function(){
+          $.ajax({
+              url : 'scripts/php/combatVic2.php',
+              type : 'POST',
+              dataType:'json',
+              success : function(data) {
+              //console.log(data);                                         
+              }
+          });
+        };
+
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////        
 
         //the combat Scene of monster 2
         game.combatScene2 = function(){            
@@ -474,6 +483,7 @@ window.onload = function() {
 
             enemy.addEventListener(enchant.Event.REMOVED_FROM_SCENE, function(){
               attacker.command = 'win';
+              victory2(); //add exp and gold to database              
               command.visible = false;
             });
             scene.addChild(enemy);
@@ -517,16 +527,21 @@ window.onload = function() {
             returnLabel.y = 5;
             returnLabel.x = 400;
             returnLabel.color = "white";
+            returnLabel.font = "14px Lucida Sans Unicode, Lucida Grande, sans-serif";
             scene.addChild(returnLabel);
             returnLabel.addEventListener('touchend',function(){
-                game.popScene();
+                game.popScene();                
             })
             //scene.scaleX = 1.1;
             //scene.scaleY = 1.1;
             return scene;
         }
 
-        game.makeScene1 = function(map,events1){                    
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////        
+
+        //map 2
+        game.makeScene2 = function(map,events1){                    
           var game = enchant.Game.instance;
 
           //get user's info from database
@@ -593,7 +608,7 @@ window.onload = function() {
             }
             else if(player.intersect(odin)){
               game.sound1.play();
-              game.showMessage("Lancelot: Walk along this path, across the forest in front, you will get to Hero Catsle. But watch out for the Tauren ahead!");
+              game.showMessage("Lancelot the Knight: Walk along this path, across the forest in front, you will get to Hero Catsle. But watch out for the Tauren ahead!");
             }
             else if(player.y<-4 && player.x>120 && player.x<196){              
               game.showMessage("New Map of Hero Catsle will be made soon.");
@@ -604,13 +619,109 @@ window.onload = function() {
                 game.sound2.play(); 
             }  
           });
-
-          showName();
-          //game.playMusic();
-
+          
           return scene;
         }
 
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+
+        //map 3
+        game.makeScene3 = function(map,events1){                    
+          var game = enchant.Game.instance;
+
+          //get user's info from database
+          playerStat = function(){
+            $.ajax({
+                url : 'scripts/php/userstat.php',
+                type : 'POST',
+                dataType:'json',
+                success : function(data) {
+                game.playerImage(player,data);                
+                }
+            });
+          };
+
+          //set user's image
+          game.playerImage = function(player,data){            
+              player.image = game.assets['images/heroWalk/h'+ data[0].class +'.png'];            
+          }
+
+          var scene = new Scene();
+
+          var map = new Map(16, 16);
+          map.image = game.assets['images/exmap0.png'];
+          map3(map); 
+
+          //monster1 = game.addMonster('bigmonster2',114+rand(90),170+rand(200),80,80);            
+
+          var player = new Player(map);
+          playerStat();
+          player.x = 17 * 16 - 8;
+          player.y = 1 * 16 - 8;   
+          
+          var pirategirl = new Sprite(32,48);
+          pirategirl.image = game.assets['images/NPCtile/pirategirl.png'];
+          pirategirl.x = 10 * 16;
+          pirategirl.y = 2 * 16;
+          pirategirl.frame = [0,0,1,1,2,2,3,3];
+
+          var pirate1 = new Sprite(32,48);
+          pirate1.image = game.assets['images/NPCtile/pirate1.png'];
+          pirate1.x = 29 * 16;
+          pirate1.y = 23 * 16;
+          pirate1.frame = [0,0,1,1,2,2,3,3];
+          
+          var stage = new Group();
+          stage.addChild(map);
+          //stage.addChild(monster1); 
+          stage.addChild(pirategirl);
+          stage.addChild(pirate1); 
+          stage.addChild(player);         
+
+          scene.addChild(stage);
+
+          scene.addEventListener('enterframe', function(e) {
+            var x = Math.min((game.width  - 16) / 2 - player.x, 0);
+            var y = Math.min((game.height - 16) / 2 - player.y, 0);
+            x = Math.max(game.width,  x + map.width)  - map.width;
+            y = Math.max(game.height, y + map.height) - map.height;
+            stage.x = x;
+            stage.y = y;
+          }); 
+
+          game.removeEventListener('inputend',events1);
+          game.addEventListener('inputend',function events3(){
+            console.log(player.x+":"+player.y);
+            
+            if (player.y<-12 && player.x>240 && player.x<268){                          
+              game.popScene();
+              game.removeEventListener('inputend',events3);
+              game.addEventListener('inputend',events1);
+              game.sound4.play(); 
+            }            
+            else if(player.intersect(pirategirl)){
+              game.sound1.play();
+              game.showMessage("Nina the Pirate Girl: Life is like a pencil that will surely run out, but will leave the beautiful writing of life.");
+            }
+            else if(player.intersect(pirate1)){
+              game.sound1.play();
+              game.showMessage("Black Caesar the Captain: I used to be an adventurer like you, but then I took an arrow in the knee.");
+            }
+ 
+          });
+
+          game.currentScene.addChild(playMusic());
+          showName();
+          showItem();
+
+          return scene;
+        };
+        
+        ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
+        
+        //things in the rootScene
         game.addNPC = function(x,y){
             var Chara = new Sprite(32,32);
             Chara.image = game.assets['images/space3.png'];
@@ -654,38 +765,110 @@ window.onload = function() {
             return Chara;
         }; 
 
-        game.playMusic = function(){
-            var music = new Label();
-            music.text = "Play Music";
-            music.font = "12px Comic Sans, Comic Sans MS, cursive";
-            music.color = "rgb(0,0,0)";
-            music.x = 480-70;
-            music.y = 3; 
-            //game.rootScene.addChild(music);
-            game.currentScene.addChild(music);
-            music.addEventListener('touchend',function(){
-                if(music.text == "Play Music"){
-                    myAudio = new Audio('sounds/bgm_village.mp3');
-                    myAudio.play();
-                    music.text = "Stop Music";
-                    myAudio.addEventListener('ended', function() {
-                        this.currentTime = 0;
-                        this.play();
-                        }, false); 
 
-                }else{
-                    myAudio.pause();
-                    music.text = "Play Music";
+        function showItem(){
+            //get user's itemlist
+            itemList = function(){
+              $.ajax({
+                  url : 'scripts/php/showItem.php',
+                  type : 'POST',
+                  dataType:'json',
+                  success : function(data) {
+                  display(data);              
+                  }
+              });
+            };
+
+            var item = new Label();
+            item.text = " Item";
+            item.font = "12px Impact, Charcoal, sans-serif"; 
+            item.x = 480-40;
+            item.y = 320-20; 
+            item.width = 30;
+            item.height = 20;
+            item.backgroundColor = "rgba(0,255,255,0.5)";
+            game.currentScene.addChild(item);
+
+            var itembox = new Sprite();
+            itembox.width = 350;
+            itembox.height = 250;
+            itembox.x = 50;
+            itembox.y = 50; 
+            itembox.backgroundColor = "rgba(0,255,255,0.5)";  
+
+            var close = new Label();
+            close.text = "Close";
+            close.x = 50+350-35;
+            close.y = 50+5; 
+            close.font = "12px Impact, Charcoal, sans-serif";  
+
+            var inventory = new Label();
+            inventory.text = "Inventory";
+            inventory.x = 50+5;
+            inventory.y = 50+5; 
+            inventory.font = "12px Impact, Charcoal, sans-serif"; 
+
+            function display(data){
+              if (data.length == 0){
+                var noitem = new MutableText();
+                noitem.text = 'no item available';
+                noitem.x = 60;
+                noitem.y = 80;
+                combo.addChild(noitem);
+              }else{
+                var i;
+                var shiftx = 0;
+                var shifty = 0;
+                for(i=0;i<data.length;i++){
+                  console.log(data[i].itemId);
+                  var aitem = new Sprite(32,32);
+                  aitem.image = game.assets['images/item1.gif'];                  
+                  switch(parseInt(data[i].itemId)){
+                    case 101: aitem.frame = 42; break;//small bread
+                    case 102: aitem.frame = 46; break;//small clarity
+                    case 201: aitem.frame = 0; break;//iron sword
+                    case 301: aitem.frame = 27; break;//helm of iron will
+                    case 401: aitem.frame = 31; break;//ring of protection
+                    default: aitem.frame = 51; break;
+                  };
+                  aitem.x = 60+shiftx*(32+10);
+                  aitem.y = 70+0*shifty;
+
+                  var itemName = new Label();
+                  itemName.text = data[i].itemName;
+                  itemName.x = 60+shiftx*(32+10);
+                  itemName.y = 100+0*shifty;
+                  itemName.font = "4px Arial, Helvetica, sans-serif";
+                  itemName.textAlign = "left"; 
+                  itemName.width = 32;
+                  itemName.height = 32;
+                  shiftx ++;
+                  combo.addChild(aitem);
+                  combo.addChild(itemName);
                 }
-            })
-        };
+              }
+            };
+
+            var combo = new Group();            
+            combo.addChild(itembox); 
+            combo.addChild(close); 
+            combo.addChild(inventory);              
+
+            item.addEventListener('touchend',function(){
+              game.currentScene.addChild(combo);
+              itemList();
+            });
+            close.addEventListener('touchend',function(){
+              game.currentScene.removeChild(combo);
+            });
+        }
 
         //Add Dialogue Message
         game.showMessage = function(text){
             var label = new Label(text);
-            label.font = "14px Times, serif ";
+            label.font = "14px Georgia, serif";
             label.color = "rgb(255,255,255)";
-            label.backgroundColor = "rgba(100,100,100,1)";
+            label.backgroundColor = "rgba(50,50,50,1)";                   
             label.x = 5;            
             label.y = 320-40;
             label.width = 470;
@@ -697,25 +880,25 @@ window.onload = function() {
             });
         };
 
-        //Add Dialogue Message
+        //Add battle Message in map1
         game.showNotice = function(text){
             var label = new Label(text);
-            label.font = "14px Times, serif ";
+            label.font = "14px Georgia, serif";
             label.color = "rgb(255,255,255)";
-            label.backgroundColor = "rgba(0,100,100,1)";
+            label.backgroundColor = "rgba(50,50,150,1)";
             label.x = 5;            
             label.y = 320-40;
             label.width = 470;
             label.height = 40;
 
             var yes = new Label("Fight");
-            yes.font = "14px Times, serif";
+            yes.font = "14px Lucida Sans Unicode, Lucida Grande, sans-serif";
             yes.color = "rgb(255,255,255)";
-            yes.x = 370;
+            yes.x = 360;
             yes.y = 320-20;
 
             var no = new Label("Escape");
-            no.font = "14px Times, serif";
+            no.font = "14px Lucida Sans Unicode, Lucida Grande, sans-serif";
             no.color = "rgb(255,255,255)";
             no.x = 410;
             no.y = 320-20;
@@ -744,25 +927,25 @@ window.onload = function() {
             });
         };
 
-                //Add Dialogue Message
+        //Add battle Message in map2
         game.showNotice2 = function(text){
             var label = new Label(text);
-            label.font = "14px Times, serif ";
+            label.font = "14px Georgia, serif";
             label.color = "rgb(255,255,255)";
-            label.backgroundColor = "rgba(0,100,100,1)";
+            label.backgroundColor = "rgba(50,50,150,1)";
             label.x = 5;            
             label.y = 320-40;
             label.width = 470;
             label.height = 40;
 
             var yes = new Label("Fight");
-            yes.font = "14px Times, serif";
+            yes.font = "14px Lucida Sans Unicode, Lucida Grande, sans-serif";
             yes.color = "rgb(255,255,255)";
-            yes.x = 370;
+            yes.x = 360;
             yes.y = 320-20;
 
             var no = new Label("Escape");
-            no.font = "14px Times, serif";
+            no.font = "14px Lucida Sans Unicode, Lucida Grande, sans-serif";
             no.color = "rgb(255,255,255)";
             no.x = 410;
             no.y = 320-20;
@@ -793,7 +976,7 @@ window.onload = function() {
 
 
         //show greeting with user name on the top left corner
-        function showName(result){
+        function showName(){
             $.ajax({
                     url : 'scripts/php/showSession.php',
                     type : 'POST',
@@ -805,32 +988,49 @@ window.onload = function() {
             });
         }; 
 
-        game.addOtherPlayers = function(data){
-            var Others = new Sprite(32, 48);
-            for(i=0;i<data.length;i++){
-                Others.image = game.assets['images/heroWalk/h'+data[i].class+'.png'];
-                Others.x = parseInt(data[i].xpos);
-                Others.y = parseInt(data[i].ypos);
-                Others.frame = [1,1,0,0,1,1,2,2];
-                return Others;
-            }
-        };  
+        //create other players Class
+        var Others = enchant.Class.create(Sprite, {
+          initialize: function(datai) {
+            enchant.Sprite.call(this, 32, 48);
+            this.image = game.assets['images/heroWalk/h'+datai.class+'.png'];
+            this.x = parseInt(datai.xpos);
+            this.y = parseInt(datai.ypos); 
+            this.direction = parseInt(datai.direction); 
+            switch(this.direction){
+              case 1:this.frame = [3,3,3,4,4,4,3,3,3,5,5,5];break; //left
+              case 2:this.frame = [6,6,6,7,7,7,6,6,6,8,8,8];break; //right
+              case 3:this.frame = [9,9,9,10,10,10,9,9,9,11,11,11];break; //up
+              case 4:this.frame = [1,1,1,0,0,0,1,1,1,2,2,2];break; //down
+              default:this.frame = [1,1,1,0,0,0,1,1,1,2,2,2];break; //down
+            }   
+            
+            this.addEventListener('enterframe',function(){
+              if(this.age > 30)stage.removeChild(this);
+            })
+          }
+        });
+
+        addOtherPlayers = function(data){
+          for(i=0;i<data.length;i++){
+            otherplayer = new Others(data[i]);
+            stage.addChild(otherplayer);
+          }
+        }
 
         //select all the other users from database who have logged in within the last 10 minutes
-        //display the other users in map
-        function displayOthers(result){
+        //display the other users in map with addOtherPlayers()
+        function displayOthers(){
             $.ajax({
-                    url : 'scripts/php/displayOthers.php',
-                    type : 'POST',
-                dataType:'json',
-                success : function(data) {                    
-                    for(i=0;i<data.length;i++){
-                        //console.log(data[i]);                        
-                        stage.addChild(game.addOtherPlayers(data));
-                    }
+                    url   : 'scripts/php/displayOthers.php',
+                    type  : 'POST',
+                dataType  :'json',
+                success   : function(data) {
+                        //console.log(data);                        
+                        addOtherPlayers(data);                    
                 }
             })
-        }; 
+        };
+
 
         //add NPC bears
         ben = game.addNPC(300,250);
@@ -851,7 +1051,7 @@ window.onload = function() {
 
         //add monsters
         monster1 = game.addMonster('monster7',100+rand(200),50+rand(100),48,48);
-        monster2= game.addMonster('monster7',300+rand(200),50+rand(100),48,48);
+        monster2 = game.addMonster('monster7',300+rand(200),50+rand(100),48,48);
 
         //add stage
         var stage = new Group();
@@ -872,20 +1072,41 @@ window.onload = function() {
         stage.addChild(player);     
 
         game.rootScene.addChild(stage); 
-        //add things on top of stage
-        game.playMusic();
-        showName();             
+
+        //add other things on top of current stage
+        game.currentScene.addChild(playMusic());
+        showName();
+        showItem();
         
 
         game.addEventListener('enterframe',function(){
-            //game.updatePos();
-            //console.log(player.x+":"+player.y);                       
+
+             if((player.age /10) % 3 == 0){displayOthers();}                   
         }); 
 
+
+        //sending current position to database
+        updatePos = function(){
+            xpos = player.x;
+            ypos = player.y; 
+            direction = player.direction;           
+            $.ajax({
+                url : 'scripts/php/updatePos.php',
+                type : 'POST',
+                data : {xposition:xpos,yposition:ypos,direction:direction},
+                dataType:'json',
+                success : function(data) {
+                    //console.log(data);
+                }
+            });
+        };
         
-        game.addEventListener('inputend',function events1(){            
+        game.addEventListener('inputend',function events1(){
+            console.log(player.x+":"+player.y);//display player's position
+            console.log(player.direction);//display player's direction
+            updatePos();        
             if(player.intersect(ben)){
-                game.showMessage('Ben: Welcome my friend, this is Bear Village. Talk to people to learn how tho play the game.'); 
+                game.showMessage('Ben: Welcome my friend, this is Bear Village. Talk to people to learn how to play the game.'); 
                 game.sound1.play();               
             }
             else if(player.intersect(alex)){
@@ -913,8 +1134,22 @@ window.onload = function() {
                 game.sound1.play(); 
             }
             else if(player.y<10 && player.x>232 && player.x<312){                                                             
-                game.pushScene(game.makeScene1(map,events1)); 
+                game.pushScene(game.makeScene2(map,events1)); 
+                game.currentScene.addChild(playMusic());
+                showName();
+                showItem();
                 game.sound4.play();                 
+            }
+            else if(player.y>748 && player.x>236 && player.x<304){                                                             
+                game.pushScene(game.makeScene3(map,events1)); 
+                game.currentScene.addChild(playMusic());
+                showName();
+                showItem();
+                game.sound4.play();                 
+            }
+            else if(player.x>600 && player.y>44 && player.y<68){                                                             
+                game.showMessage('You do not have access now. New Map will be made soon.'); 
+                game.sound1.play();                
             }
             else if(player.intersect(monster1) || player.intersect(monster2)){                        
                 game.showNotice("You have encounter Scorpion the monster. Will you fight the monster?"); 
@@ -954,7 +1189,7 @@ function makeBackground(image){
 //greeting the current user
 function Greeting(text){
     var label = new Label(text);
-    label.font = "12px Comic Sans, Comic Sans MS, cursive";
+    label.font = "12px Impact, Charcoal, sans-serif";
     label.color = "rgb(0,0,0)";    
     label.backgroundColor = "rgba(0,255,255,0.5)";
     label.width = 100+text.length;
@@ -963,6 +1198,36 @@ function Greeting(text){
     return label;
 }
 
+//background music switch on/off
+function playMusic(){
+    var music = new Label();
+    music.text = "Play Music";
+    music.font = "12px Impact, Charcoal, sans-serif"; 
+    music.x = 480-70;
+    music.y = 3; 
+    music.width = 60;
+    music.height = 20;
+    music.textAlign = "center";
+    music.backgroundColor = "rgba(0,255,255,0.5)"; 
+    //game.currentScene.addChild(music);
+    myAudio = new Audio('sounds/bgm_village.mp3');
+    //myAudio.play();
+    myAudio.addEventListener('ended', function() {
+      this.currentTime = 0;
+      this.play();
+      }, false);
+            
+    music.addEventListener('touchend',function(){
+        if(music.text == "Play Music"){                    
+            myAudio.play();
+            music.text = "Stop Music";
+        }else{                    
+            myAudio.pause();
+            music.text = "Play Music";
+        }
+    });
+    return music;
+};
 
 //Calculates the distance between two points
 function calcLen(x0, y0, x1, y1) {
@@ -1284,4 +1549,102 @@ backgroundMap.collisionData = [
     [1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
+}
+
+function map3(backgroundMap){
+backgroundMap.loadData([
+    [243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,244,174,175,176,242,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243],
+    [243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,244,174,175,176,242,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243],
+    [243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,244,174,175,176,242,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243],
+    [243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,244,174,175,176,242,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243],
+    [243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,244,174,175,176,242,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243,243],
+    [243,243,210,260,260,260,260,260,260,260,260,260,211,243,243,244,174,175,176,242,210,260,260,260,260,260,260,260,211,243,243,243,243,243,243,210,260,260,260,260],
+    [260,260,261,21,22,22,22,22,22,22,22,23,259,260,260,261,191,195,193,259,261,21,22,22,22,22,22,23,259,260,260,211,243,210,260,261,21,22,22,22],
+    [22,22,22,5,39,39,39,39,39,39,39,4,22,22,22,22,23,173,21,22,22,5,39,39,39,39,39,4,22,22,23,259,260,261,21,22,5,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,40,173,38,39,39,39,39,39,39,39,39,39,39,39,4,22,22,22,5,39,39,39,39,39],
+    [39,39,39,39,39,6,56,56,56,7,39,39,39,39,39,39,40,173,38,39,39,39,39,6,56,56,56,56,56,56,56,56,56,56,56,7,39,39,39,39],
+    [39,39,39,39,39,40,157,158,159,55,56,56,56,56,56,56,57,173,38,39,39,39,39,40,153,138,138,138,138,138,138,138,138,138,155,38,39,39,39,39],
+    [39,39,39,39,39,40,174,175,179,138,138,138,138,138,138,138,138,172,38,39,39,39,39,40,173,21,22,22,22,22,22,22,22,23,173,38,39,39,39,39],
+    [39,39,39,39,39,40,191,192,193,21,22,22,22,22,22,22,23,173,55,56,56,56,56,57,173,38,39,39,39,39,39,39,39,40,173,38,39,39,39,39],
+    [39,39,39,39,39,4,22,22,22,5,39,39,39,39,39,39,40,170,138,138,138,138,138,138,189,38,39,39,39,39,39,39,6,57,173,55,7,39,39,39],
+    [6,56,56,56,7,39,39,39,39,39,39,39,6,56,56,56,57,173,21,22,22,22,22,22,22,5,39,39,39,39,39,39,40,157,161,159,38,39,39,39],
+    [40,157,158,159,55,56,56,56,56,56,56,56,57,153,138,138,138,172,38,39,39,39,39,39,39,39,39,39,39,39,39,39,40,174,175,176,38,39,39,39],
+    [40,174,175,179,138,138,138,138,138,138,138,138,138,189,21,22,23,173,38,39,39,39,39,39,39,39,39,39,39,39,39,39,40,191,192,193,38,39,39,39],
+    [40,191,192,193,21,22,22,22,22,22,22,22,22,22,5,39,40,173,55,56,56,56,56,56,56,56,56,56,56,7,39,39,4,22,22,22,5,39,39,39],
+    [4,22,22,22,5,39,39,39,39,39,39,39,39,39,39,39,40,170,138,138,138,138,138,138,138,138,138,138,155,55,7,39,39,39,39,39,39,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,40,173,21,22,22,22,22,22,22,22,22,23,187,155,55,7,39,39,39,6,56,56,56,7],
+    [39,39,39,39,6,56,56,56,7,39,39,39,39,39,39,39,40,173,38,39,39,39,39,39,39,39,39,4,23,187,155,55,56,56,56,57,157,158,159,38],
+    [39,39,39,39,40,157,158,159,55,56,56,56,56,56,56,56,57,173,38,39,39,39,39,39,39,39,39,39,4,23,187,138,138,138,138,138,177,175,176,38],
+    [39,39,39,39,40,174,175,179,138,138,138,138,138,138,138,138,138,172,38,39,39,39,39,39,39,39,39,39,39,4,22,22,22,22,22,23,191,192,193,38],
+    [39,39,39,39,40,191,192,193,21,22,22,22,22,22,22,22,23,173,38,39,39,39,39,39,39,6,56,56,56,56,56,56,7,39,39,4,22,22,22,5],
+    [39,39,39,39,4,22,22,22,5,39,39,39,39,39,39,39,40,173,55,56,56,56,56,56,56,57,157,158,158,158,158,159,38,39,39,39,39,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,40,187,138,138,138,138,138,138,138,138,177,175,175,175,175,176,38,39,39,39,39,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,4,22,22,22,22,22,22,22,22,23,174,175,175,175,175,176,38,39,39,39,39,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,40,191,192,192,192,192,193,38,39,39,39,39,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,4,22,22,22,22,22,22,5,39,39,39,39,39,39,39],
+    [39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39,39]
+],[
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,302,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,302,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,302,-1,-1,-1,-1,-1,-1,302,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,302,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,371,-1,371,-1,-1,-1],
+    [-1,-1,302,-1,-1,302,-1,-1,-1,371,-1,-1,302,-1,-1,335,-1,-1,-1,-1,-1,-1,302,-1,-1,-1,371,-1,-1,-1,-1,302,-1,-1,-1,371,-1,-1,-1,-1],
+    [371,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,352,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,371,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,318,-1,318,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,318,-1,318,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,318,-1,318,-1,-1,-1,-1],
+    [-1,318,-1,318,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,318,-1,318,-1,-1,-1,-1],
+    [-1,318,-1,318,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,318,-1,318,-1],
+    [-1,-1,-1,-1,-1,318,-1,318,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,318,-1,318,-1],
+    [-1,-1,-1,-1,-1,318,-1,318,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,284,318,318,318,318,318,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,286,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,286,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,284,318,318,318,318,318,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],
+    [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
+]);
+backgroundMap.collisionData = [
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0],
+    [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0],
+    [1,0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1],
+    [1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1],
+    [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1],
+    [1,0,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1],
+    [1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,1],
+    [1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1],
+    [1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
 }
